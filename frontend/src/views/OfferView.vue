@@ -59,11 +59,6 @@
             </dl>
             <a :href="`/go/${offer.slug}`" class="btn btn-gold btn-block" target="_blank" rel="sponsored nofollow noopener">Claim offer</a>
           </div>
-          <div class="safe glass">
-            <strong>🛟 Play it safe</strong>
-            <p class="muted">Set a budget before you play and never chase losses.</p>
-            <a :href="site.responsible_gambling_url" target="_blank" rel="noopener">Get free support →</a>
-          </div>
         </aside>
       </div>
 
@@ -141,9 +136,6 @@ dl { margin: 0 0 18px; }
 dl div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
 dt { color: var(--faint); }
 dd { margin: 0; text-align: right; font-weight: 600; }
-.safe { padding: 20px 22px; font-size: 14px; }
-.safe p { margin: 6px 0 8px; }
-.safe a { color: var(--gold); font-weight: 600; }
 
 @media (max-width: 960px) {
   .hero { grid-template-columns: 1fr; }
