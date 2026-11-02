@@ -84,3 +84,21 @@ that is **not** one of the mail sending domains.
 - Each page's real content (h1, offer text, terms, facts, links to every offer and info page) is rendered into `<div id="app">` so crawlers see it without JS; Vue replaces it on mount. JSON-LD: WebSite + ItemList (home), BreadcrumbList (offer/info pages). og:image = offer logo when set.
 - `index.html` is read once at startup, so **restart pm2 after a frontend rebuild**.
 - The `INFO_PAGES` titles in seo.js must stay in sync with `frontend/src/views/InfoView.vue`. The base URL comes from `SITE_URL` (default https://noradion.org).
+
+### Brand hosts (offers.<sender-domain>)
+
+Email buttons should link to the same domain as the From address. The same app serves
+`offers.<domain>` for each sending brand, configured by `BRAND_HOSTS` in `backend/.env`:
+
+```
+BRAND_HOSTS={"offers.serawin.net":{"site_name":"Serawin Offers","contact_email":"support@serawin.net"}}
+```
+
+Brand hosts override `site_name`/`tagline`/`hero_*`/`contact_email`, are always
+**noindex** (robots.txt `Disallow: /`, `X-Robots-Tag`, meta robots, no sitemap) so they
+never compete with the primary site (`SITE_URL`) in search, and hide the newsletter box.
+Add one: Cloudflare A `offers.<domain>` → controller IP (DNS only), nginx server block
+proxying to 127.0.0.1:3010, `certbot --nginx -d offers.<domain> --cert-name offers.<domain>`
+(one cert per domain — never combine brands on one cert), add to `BRAND_HOSTS`, restart pm2.
+Only add brand hosts for long-lived sending domains: the same catalogue on many sender
+domains is a snowshoe-spam pattern.
