@@ -58,7 +58,7 @@
     </section>
 
     <!-- Subscribe -->
-    <section class="section">
+    <section v-if="site.subscribe_enabled !== false" class="section">
       <div class="container"><SubscribeBox /></div>
     </section>
 

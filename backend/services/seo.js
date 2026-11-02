@@ -4,8 +4,9 @@
 
 import db from '../db.js';
 import { readSettings } from '../routes/public.js';
+import { siteFor, primaryUrl } from './brands.js';
 
-export const SITE_URL = (process.env.SITE_URL || 'https://noradion.org').replace(/\/+$/, '');
+export const SITE_URL = primaryUrl();
 
 // Keep in sync with frontend/src/views/InfoView.vue.
 const INFO_PAGES = {
@@ -20,9 +21,11 @@ const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 const clip = (s, n = 160) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s; };
 
 const paras = txt => String(txt).split(/\n\s*\n|\n/).map(x => x.trim()).filter(Boolean).map(x => `<p>${esc(x)}</p>`).join('');
-const infoLinks = () => '<nav><ul>' + Object.keys(INFO_PAGES).map(k => `<li><a href="/info/${k}">${esc(INFO_PAGES[k].title(readSettings()))}</a></li>`).join('') + '</ul></nav>';
+const infoLinks = (s) => '<nav><ul>' + Object.keys(INFO_PAGES).map(k => `<li><a href="/info/${k}">${esc(INFO_PAGES[k].title(s))}</a></li>`).join('') + '</ul></nav>';
 
-export function robotsTxt() {
+// Brand hosts (offers.<sender-domain>) are never indexed — see services/brands.js.
+export function robotsTxt(req) {
+  if (req && !siteFor(req).primary) return 'User-agent: *\nDisallow: /\n';
   return `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /go/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`;
 }
 
@@ -41,11 +44,13 @@ export function sitemapXml() {
 }
 
 // Returns { status, title, description, canonical, noindex } for a request path.
-export function headFor(path) {
-  const s = readSettings();
+export function headFor(path, req) {
+  const site = req ? siteFor(req) : { url: SITE_URL, primary: true };
+  const SITE_URL = site.url;            // shadows the module constant: links/canonical use this host
+  const s = readSettings(req);
   const name = s.site_name || 'Casino Offers';
   const t = part => `${part} · ${name}`;
-  const base = { status: 200, noindex: false, canonical: SITE_URL + path };
+  const base = { status: 200, noindex: !site.primary, canonical: SITE_URL + path, siteName: name };
 
   const org = { '@type': 'Organization', name, url: SITE_URL + '/' };
   const crumbs = items => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: SITE_URL + u })) });
@@ -57,7 +62,7 @@ export function headFor(path) {
         { '@type': 'ItemList', itemListElement: offers.map((o, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SITE_URL}/offers/${o.slug}`, name: `${o.name}: ${o.bonus_title}` })) }],
       body: `<h1>${esc(s.hero_title || name)}</h1><p>${esc(s.hero_subtitle)}</p><h2>Current casino welcome offers</h2><ul>`
         + offers.map(o => `<li><a href="/offers/${esc(o.slug)}">${esc(o.name)}: ${esc(o.bonus_title)}</a>${o.short_description ? ` — ${esc(o.short_description)}` : ''}</li>`).join('')
-        + `</ul>${infoLinks()}` };
+        + `</ul>${infoLinks(s)}` };
   }
 
   let m = path.match(/^\/offers\/([a-z0-9-]+)\/?$/);
@@ -82,7 +87,7 @@ export function headFor(path) {
   }
   m = path.match(/^\/info\/([a-z-]+)\/?$/);
   if (m && INFO_PAGES[m[1]]) { const p = INFO_PAGES[m[1]]; return { ...base, canonical: `${SITE_URL}/info/${m[1]}`, title: t(p.title(s)), description: clip(p.desc(s)),
-    jsonld: [crumbs([[name, '/'], [p.title(s), `/info/${m[1]}`]])], body: `<h1>${esc(p.title(s))}</h1><p>${esc(p.desc(s))}</p>${infoLinks()}` }; }
+    jsonld: [crumbs([[name, '/'], [p.title(s), `/info/${m[1]}`]])], body: `<h1>${esc(p.title(s))}</h1><p>${esc(p.desc(s))}</p>${infoLinks(s)}` }; }
 
   if (path === '/confirm') return { ...base, noindex: true, title: t('Confirm subscription'), description: 'Confirm your newsletter subscription.' };
   if (path === '/admin' || path.startsWith('/admin/')) return { ...base, noindex: true, title: 'Admin', description: '' };
@@ -98,7 +103,7 @@ export function renderShell(html, head) {
     head.description && `<meta property="og:description" content="${esc(head.description)}" />`,
     `<meta property="og:url" content="${esc(head.canonical)}" />`,
     '<meta property="og:type" content="website" />',
-    `<meta property="og:site_name" content="${esc(readSettings().site_name)}" />`,
+    `<meta property="og:site_name" content="${esc(head.siteName || readSettings().site_name)}" />`,
     head.image && `<meta property="og:image" content="${esc(head.image)}" />`,
     `<meta name="twitter:card" content="summary" />`,
     head.jsonld && `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': head.jsonld }).replace(/</g, '\\u003c')}</script>`,

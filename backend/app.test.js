@@ -11,6 +11,7 @@ process.env.UPLOAD_DIR = mkdtempSync(join(tmpdir(), 'offers-up-'));
 process.env.FRONTEND_DIST = '/nonexistent';
 process.env.CONTROLLER_URL = 'http://controller.test';
 process.env.CONTROLLER_SITE_KEY = 'site-key';
+process.env.BRAND_HOSTS = JSON.stringify({ 'offers.serawin.net': { site_name: 'Serawin Offers', contact_email: 'support@serawin.net' } });
 
 const bcrypt = (await import('bcrypt')).default;
 const db = (await import('./db.js')).default;
@@ -132,4 +133,37 @@ test('logo upload rejects non-images', async () => {
   fd.append('logo', new Blob(['<svg onload="alert(1)"/>'], { type: 'image/svg+xml' }), 'x.svg');
   const r = await realFetch(`${base}/api/admin/offers/${offer.id}/logo`, { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } });
   assert.equal(r.status, 400);
+});
+
+// ── Brand hosts (offers.<sender-domain>) ─────────────────────────────────────
+import http from 'node:http';
+function getWithHost(path, host) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(base + path);
+    http.get({ hostname: u.hostname, port: u.port, path, headers: { Host: host } }, (res) => {
+      let body = ''; res.on('data', d => body += d); res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
+    }).on('error', reject);
+  });
+}
+
+test('brand host: branded settings, newsletter hidden, never indexed', async () => {
+  const site = await getWithHost('/api/site', 'offers.serawin.net');
+  const s = JSON.parse(site.body);
+  assert.equal(s.site_name, 'Serawin Offers');
+  assert.equal(s.contact_email, 'support@serawin.net');
+  assert.equal(s.subscribe_enabled, false);
+  assert.equal(s.site_url, 'https://offers.serawin.net');
+  assert.match(site.headers['x-robots-tag'], /noindex/);
+  const robots = await getWithHost('/robots.txt', 'offers.serawin.net');
+  assert.match(robots.body, /Disallow: \//);
+  assert.equal((await getWithHost('/sitemap.xml', 'offers.serawin.net')).status, 404);
+});
+
+test('primary host: unchanged settings, indexable, newsletter on', async () => {
+  const site = await getWithHost('/api/site', 'noradion.org');
+  const s = JSON.parse(site.body);
+  assert.notEqual(s.site_name, 'Serawin Offers');
+  assert.equal(s.subscribe_enabled, true);
+  assert.equal(site.headers['x-robots-tag'], undefined);
+  assert.match((await getWithHost('/robots.txt', 'noradion.org')).body, /Allow: \//);
 });

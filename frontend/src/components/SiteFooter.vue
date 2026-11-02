@@ -15,7 +15,7 @@
             <h4>Explore</h4>
             <RouterLink to="/#offers">All offers</RouterLink>
             <RouterLink to="/#how">How it works</RouterLink>
-            <RouterLink to="/#subscribe">Newsletter</RouterLink>
+            <RouterLink v-if="site.subscribe_enabled !== false" to="/#subscribe">Newsletter</RouterLink>
           </div>
           <div>
             <h4>Information</h4>

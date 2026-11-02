@@ -11,6 +11,8 @@ export const site = reactive({
   contact_email: '',
   min_age: '18',
   responsible_gambling_url: 'https://www.begambleaware.org',
+  subscribe_enabled: true,   // false on brand hosts (offers.<sender-domain>)
+  site_url: '',
 });
 
 export async function loadSite() {
@@ -27,5 +29,5 @@ export function setTitle(part) {
 export function setCanonical(path) {
   let el = document.querySelector('link[rel="canonical"]');
   if (!el) { el = document.createElement('link'); el.rel = 'canonical'; document.head.appendChild(el); }
-  el.href = 'https://noradion.org' + path;
+  el.href = (site.site_url || window.location.origin) + path;
 }

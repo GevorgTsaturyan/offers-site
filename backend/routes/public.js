@@ -3,16 +3,22 @@ import db, { SETTING_KEYS } from '../db.js';
 import * as Offers from '../services/offers.js';
 import * as Controller from '../services/controllerClient.js';
 import { rateLimit } from '../middleware/rateLimit.js';
+import { siteFor } from '../services/brands.js';
 
 const router = express.Router();
 
-export function readSettings() {
+// `req` optional: when given, brand-host overrides (services/brands.js) apply.
+export function readSettings(req) {
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const s = Object.fromEntries(rows.map(r => [r.key, r.value]));
-  return Object.fromEntries(SETTING_KEYS.map(k => [k, s[k] ?? '']));
+  const base = Object.fromEntries(SETTING_KEYS.map(k => [k, s[k] ?? '']));
+  return req ? { ...base, ...siteFor(req).overrides } : base;
 }
 
-router.get('/api/site', (req, res) => res.json(readSettings()));
+router.get('/api/site', (req, res) => {
+  const site = siteFor(req);
+  res.json({ ...readSettings(req), subscribe_enabled: site.primary, site_url: site.url });
+});
 
 router.get('/api/offers', (req, res) => res.json(Offers.listPublic()));
 

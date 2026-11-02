@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import publicRouter from './routes/public.js';
 import adminRouter, { UPLOAD_DIR } from './routes/admin.js';
 import { robotsTxt, sitemapXml, headFor, renderShell } from './services/seo.js';
+import { siteFor } from './services/brands.js';
 
 mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -20,8 +21,17 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt()));
-app.get('/sitemap.xml', (req, res) => res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(sitemapXml()));
+// Brand hosts (offers.<sender-domain>): noindex on every response, no sitemap.
+app.use((req, res, next) => {
+  if (!siteFor(req).primary) res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
+app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt(req)));
+app.get('/sitemap.xml', (req, res) => {
+  if (!siteFor(req).primary) return res.status(404).type('text/plain').send('Not found');
+  res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(sitemapXml());
+});
 
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));
 app.use(publicRouter);
@@ -35,7 +45,7 @@ if (existsSync(DIST)) {
   // SPA fallback with per-route <head> (title, description, canonical, noindex) and real 404 status.
   const shell = readFileSync(join(DIST, 'index.html'), 'utf8');
   app.get(/^\/(?!api\/|uploads\/|go\/).*/, (req, res) => {
-    const head = headFor(req.path);
+    const head = headFor(req.path, req);
     if (head.noindex) res.set('X-Robots-Tag', 'noindex, nofollow');
     res.status(head.status).type('html').set('Cache-Control', 'no-cache').send(renderShell(shell, head));
   });
