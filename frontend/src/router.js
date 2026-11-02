@@ -1,3 +1,4 @@
+import { setCanonical } from './site.js';
 import { createRouter, createWebHistory } from 'vue-router';
 import { auth } from './api.js';
 
@@ -35,5 +36,7 @@ const router = createRouter({
 router.beforeEach((to) => {
   if (to.matched.some(r => r.meta.admin) && !auth.token) return { path: '/admin/login', query: { next: to.fullPath } };
 });
+
+router.afterEach((to) => setCanonical(to.path));
 
 export default router;

@@ -75,3 +75,11 @@ that is **not** one of the mail sending domains.
 ## Tests
 
 `cd backend && npm test` — API end-to-end tests (in-memory DB, controller mocked).
+
+## SEO
+
+`backend/services/seo.js` (wired in `backend/app.js`):
+- `GET /robots.txt` (text/plain) and `GET /sitemap.xml` (application/xml). The sitemap is built from the DB on every request: `/`, every **active** offer `/offers/<slug>` (lastmod = `updated_at`) and the `/info/*` pages. Admin, API, `/go/`, `/confirm` and 404s are left out.
+- The SPA fallback rewrites `index.html` per URL to set a unique `<title>`, meta description, canonical link and og tags. `/admin*`, `/confirm` and unknown URLs get `noindex`. Unknown URLs and unknown offers return a real **404**.
+- `index.html` is read once at startup, so **restart pm2 after a frontend rebuild**.
+- The `INFO_PAGES` titles in seo.js must stay in sync with `frontend/src/views/InfoView.vue`. The base URL comes from `SITE_URL` (default https://noradion.org).

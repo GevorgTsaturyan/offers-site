@@ -22,3 +22,10 @@ export async function loadSite() {
 export function setTitle(part) {
   document.title = part ? `${part} · ${site.site_name}` : `${site.site_name} — ${site.tagline || 'Casino offers'}`;
 }
+
+// Keep <link rel="canonical"> in sync on client-side navigation (server sets it on first load).
+export function setCanonical(path) {
+  let el = document.querySelector('link[rel="canonical"]');
+  if (!el) { el = document.createElement('link'); el.rel = 'canonical'; document.head.appendChild(el); }
+  el.href = 'https://noradion.org' + path;
+}

@@ -1,9 +1,10 @@
 // Express app (no listen) — imported by index.js and by tests.
 import express from 'express';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import publicRouter from './routes/public.js';
 import adminRouter, { UPLOAD_DIR } from './routes/admin.js';
+import { robotsTxt, sitemapXml, headFor, renderShell } from './services/seo.js';
 
 mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -19,6 +20,9 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(robotsTxt()));
+app.get('/sitemap.xml', (req, res) => res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(sitemapXml()));
+
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));
 app.use(publicRouter);
 app.use('/api/admin', adminRouter);
@@ -28,7 +32,13 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 const DIST = resolve(process.env.FRONTEND_DIST || '../frontend/dist');
 if (existsSync(DIST)) {
   app.use(express.static(DIST, { maxAge: '1h', index: false }));
-  app.get(/^\/(?!api\/|uploads\/|go\/).*/, (req, res) => res.sendFile(join(DIST, 'index.html')));
+  // SPA fallback with per-route <head> (title, description, canonical, noindex) and real 404 status.
+  const shell = readFileSync(join(DIST, 'index.html'), 'utf8');
+  app.get(/^\/(?!api\/|uploads\/|go\/).*/, (req, res) => {
+    const head = headFor(req.path);
+    if (head.noindex) res.set('X-Robots-Tag', 'noindex, nofollow');
+    res.status(head.status).type('html').set('Cache-Control', 'no-cache').send(renderShell(shell, head));
+  });
 }
 
 export default app;
