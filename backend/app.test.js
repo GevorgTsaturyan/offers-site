@@ -167,3 +167,37 @@ test('primary host: unchanged settings, indexable, newsletter on', async () => {
   assert.equal(site.headers['x-robots-tag'], undefined);
   assert.match((await getWithHost('/robots.txt', 'noradion.org')).body, /Allow: \//);
 });
+
+// ── Generated brand sites ────────────────────────────────────────────────────
+test('internal brands API: auth required; new brand gets its own design; stable on re-register', async () => {
+  process.env.INTERNAL_API_KEY = 'internal-test-key';
+  const post = (body, key) => fetch(`${base}/api/internal/brands`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(key ? { 'X-Internal-Key': key } : {}) }, body: JSON.stringify(body) });
+  assert.equal((await post({ domain: 'ardovia.co', site_name: 'Ardovia' })).status, 401);
+  assert.equal((await post({ domain: 'ardovia.co', site_name: 'Ardovia' }, 'wrong-key-wrong-key')).status, 401);
+  const r1 = await post({ domain: 'ardovia.co', site_name: 'Ardovia', contact_email: 'support@ardovia.co' }, 'internal-test-key');
+  assert.equal(r1.status, 201);
+  const b1 = await r1.json();
+  assert.ok(b1.theme.accent && b1.copy.hero_title);
+  const r2 = await post({ domain: 'ardovia.co', site_name: 'Ardovia' }, 'internal-test-key');
+  assert.equal(r2.status, 200);
+  assert.deepEqual((await r2.json()).theme, b1.theme, 'design must not change on re-register');
+  assert.equal((await post({ domain: 'not a domain' }, 'internal-test-key')).status, 400);
+});
+
+test('brand host serves its own design, copy and offer order', async () => {
+  const s = JSON.parse((await getWithHost('/api/site', 'offers.ardovia.co')).body);
+  assert.equal(s.site_name, 'Ardovia');
+  assert.ok(s.theme?.layout && s.copy?.steps?.length === 3);
+  assert.equal(s.subscribe_enabled, false);
+  const root = JSON.parse((await getWithHost('/api/site', 'ardovia.co')).body);
+  assert.equal(root.site_name, 'Ardovia', 'bare domain maps to the same brand');
+  const primary = JSON.parse((await getWithHost('/api/site', 'noradion.org')).body);
+  assert.equal(primary.theme, null);
+});
+
+test('different brands get different designs', async () => {
+  const { generateBrandDesign } = await import('./services/themeGen.js');
+  const ds = ['serawin.net', 'calerion.org', 'ardovia.co', 'merovia.org', 'corenvia.net'].map(d => generateBrandDesign(d));
+  const keys = new Set(ds.map(d => `${d.theme.palette}|${d.theme.layout}|${d.theme.font}|${d.copy.hero_title}`));
+  assert.equal(keys.size, ds.length);
+});

@@ -5,6 +5,7 @@
 import db from '../db.js';
 import { readSettings } from '../routes/public.js';
 import { siteFor, primaryUrl } from './brands.js';
+import { themeCss } from './themeGen.js';
 
 export const SITE_URL = primaryUrl();
 
@@ -50,7 +51,9 @@ export function headFor(path, req) {
   const s = readSettings(req);
   const name = s.site_name || 'Casino Offers';
   const t = part => `${part} · ${name}`;
-  const base = { status: 200, noindex: !site.primary, canonical: SITE_URL + path, siteName: name };
+  const b = site.brand;
+  const base = { status: 200, noindex: !site.primary, canonical: SITE_URL + path, siteName: name,
+    themeCss: b ? themeCss(b.theme) : '', htmlAttrs: b ? { 'data-layout': b.theme.layout, 'data-hero': b.theme.hero, 'data-mode': b.theme.mode } : null };
 
   const org = { '@type': 'Organization', name, url: SITE_URL + '/' };
   const crumbs = items => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: SITE_URL + u })) });
@@ -95,7 +98,7 @@ export function headFor(path, req) {
 }
 
 export function renderShell(html, head) {
-  const tags = [
+  let tags = [
     head.description && `<meta name="description" content="${esc(head.description)}" />`,
     `<link rel="canonical" href="${esc(head.canonical)}" />`,
     head.noindex && '<meta name="robots" content="noindex, nofollow" />',
@@ -108,6 +111,9 @@ export function renderShell(html, head) {
     `<meta name="twitter:card" content="summary" />`,
     head.jsonld && `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': head.jsonld }).replace(/</g, '\\u003c')}</script>`,
   ].filter(Boolean).join('\n    ');
+  const attrs = head.htmlAttrs ? Object.entries(head.htmlAttrs).map(([k, v]) => ` ${k}="${esc(v)}"`).join('') : '';
+  if (attrs) html = html.replace(/<html([^>]*)>/i, `<html$1${attrs}>`);
+  if (head.themeCss) tags += `\n    <style id="brand-theme">${head.themeCss.replace(/</g, '')}</style>`;
   return html
     .replace('<div id="app"></div>', `<div id="app">${head.body || ''}</div>`)
     .replace(/<meta name="description"[^>]*>\s*/i, '')

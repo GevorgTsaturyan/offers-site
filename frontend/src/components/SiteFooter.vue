@@ -3,7 +3,7 @@
     <div class="container">
       <div class="top">
         <div class="about">
-          <div class="brand"><span class="mark">★</span>{{ site.site_name }}</div>
+          <div class="brand"><span class="mark">{{ site.theme?.mark || '★' }}</span>{{ site.site_name }}</div>
           <p class="muted">{{ site.tagline }}</p>
           <div class="age">
             <span class="age-pill">{{ site.min_age }}+</span>

@@ -47,6 +47,20 @@ db.exec(`
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  -- Brand sites (one per sender domain): served on offers.<domain> and, when its
+  -- DNS points here, on <domain>/www.<domain>. theme/copy are generated once
+  -- (services/themeGen.js) so each brand looks and reads differently.
+  CREATE TABLE IF NOT EXISTS brands (
+    domain        TEXT PRIMARY KEY,
+    site_name     TEXT NOT NULL,
+    contact_email TEXT NOT NULL DEFAULT '',
+    theme         TEXT NOT NULL,
+    copy          TEXT NOT NULL,
+    offer_seed    INTEGER NOT NULL,
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL
+  );
 `);
 
 const DEFAULT_SETTINGS = {

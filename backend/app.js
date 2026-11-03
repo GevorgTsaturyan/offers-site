@@ -5,9 +5,12 @@ import { join, resolve } from 'node:path';
 import publicRouter from './routes/public.js';
 import adminRouter, { UPLOAD_DIR } from './routes/admin.js';
 import { robotsTxt, sitemapXml, headFor, renderShell } from './services/seo.js';
-import { siteFor } from './services/brands.js';
+import { siteFor, migrateEnvBrands } from './services/brands.js';
+import internalRouter from './routes/internal.js';
 
 mkdirSync(UPLOAD_DIR, { recursive: true });
+// Legacy BRAND_HOSTS env → brands table (idempotent; existing brands untouched).
+try { const n = migrateEnvBrands(); if (n) console.log(`[brands] migrated ${n} brand(s) from BRAND_HOSTS`); } catch (e) { console.error('[brands] migration failed:', e.message); }
 
 const app = express();
 app.disable('x-powered-by');
@@ -36,6 +39,7 @@ app.get('/sitemap.xml', (req, res) => {
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));
 app.use(publicRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/internal', internalRouter);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Built frontend (frontend/dist) with SPA fallback, so one process serves everything.

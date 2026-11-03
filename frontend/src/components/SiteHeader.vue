@@ -2,7 +2,7 @@
   <header class="header" :class="{ scrolled }">
     <div class="container bar">
       <RouterLink to="/" class="brand" @click="open = false">
-        <span class="mark">★</span>
+        <span class="mark">{{ site.theme?.mark || '★' }}</span>
         <span class="name">{{ site.site_name }}</span>
       </RouterLink>
 

@@ -6,7 +6,7 @@
         <div class="intro fade-in">
           <span class="pill"><span class="dot" /> {{ offers.length || '' }} offers · updated {{ updatedLabel }}</span>
           <h1>{{ heroTitleStart }} <span class="gradient-text">{{ heroTitleEnd }}</span></h1>
-          <p class="lead">Compare the welcome bonuses below and claim the one that suits you. Tap “Details” for the full terms.</p>
+          <p class="lead">{{ site.copy?.lead || 'Compare the welcome bonuses below and claim the one that suits you. Tap “Details” for the full terms.' }}</p>
         </div>
 
         <div v-if="offers.length > 6" class="tools">
@@ -42,10 +42,11 @@
       </div>
     </section>
 
+    <template v-for="sec in sections" :key="sec">
     <!-- How it works -->
-    <section id="how" class="section how">
+    <section v-if="sec === 'how'" id="how" class="section how">
       <div class="container">
-        <h2 class="section-title center">How it <span class="gradient-text">works</span></h2>
+        <h2 class="section-title center"><template v-if="site.copy?.how_title">{{ site.copy.how_title }}</template><template v-else>How it <span class="gradient-text">works</span></template></h2>
         <div class="steps">
           <div v-for="(s, i) in steps" :key="s.title" class="step glass">
             <span class="num">{{ i + 1 }}</span>
@@ -57,13 +58,8 @@
       </div>
     </section>
 
-    <!-- Subscribe -->
-    <section v-if="site.subscribe_enabled !== false" class="section">
-      <div class="container"><SubscribeBox /></div>
-    </section>
-
     <!-- Trust -->
-    <section class="section trust-wrap">
+    <section v-else-if="sec === 'trust'" class="section trust-wrap">
       <div class="container trust">
         <div v-for="t in trust" :key="t.title" class="trust-item">
           <span class="trust-icon">{{ t.icon }}</span>
@@ -71,6 +67,13 @@
         </div>
       </div>
     </section>
+    </template>
+
+    <!-- Subscribe -->
+    <section v-if="site.subscribe_enabled !== false" class="section">
+      <div class="container"><SubscribeBox /></div>
+    </section>
+
   </div>
 </template>
 
@@ -110,12 +113,16 @@ const filtered = computed(() => {
   return list;
 });
 
-const steps = [
+// Brand hosts supply their own wording and section order (services/themeGen.js).
+const sections = computed(() => site.copy?.sections || ['how', 'trust']);
+const steps = computed(() => site.copy?.steps || defaultSteps);
+const trust = computed(() => site.copy?.trust || defaultTrust);
+const defaultSteps = [
   { icon: '🧭', title: 'Compare', text: 'See the bonus, wagering and minimum deposit for each casino at a glance.' },
   { icon: '📄', title: 'Read the terms', text: 'Open the details page for the full conditions in plain language.' },
   { icon: '🎁', title: 'Claim if it fits', text: 'Only claim offers that suit you. You go straight to the casino’s own page.' },
 ];
-const trust = [
+const defaultTrust = [
   { icon: '🔒', title: 'Licensed operators', text: 'We only list casinos we have checked.' },
   { icon: '🧾', title: 'Clear terms', text: 'Wagering and limits are shown up front.' },
   { icon: '✉️', title: 'No spam', text: 'Unsubscribe from emails with one click.' },

@@ -85,20 +85,24 @@ that is **not** one of the mail sending domains.
 - `index.html` is read once at startup, so **restart pm2 after a frontend rebuild**.
 - The `INFO_PAGES` titles in seo.js must stay in sync with `frontend/src/views/InfoView.vue`. The base URL comes from `SITE_URL` (default https://noradion.org).
 
-### Brand hosts (offers.<sender-domain>)
+### Brand sites (offers.<sender-domain>)
 
-Email buttons should link to the same domain as the From address. The same app serves
-`offers.<domain>` for each sending brand, configured by `BRAND_HOSTS` in `backend/.env`:
+Email buttons link to the same domain as the From address. The same app serves a
+**separate brand site** for each sender domain on `offers.<domain>` (and on `<domain>` /
+`www.<domain>` when their DNS points here). Brands live in the `brands` table:
 
-```
-BRAND_HOSTS={"offers.serawin.net":{"site_name":"Serawin Offers","contact_email":"support@serawin.net"}}
-```
+- created by the campaign controller during identity provisioning:
+  `POST /api/internal/brands {domain, site_name, contact_email}` with header
+  `X-Internal-Key: $INTERNAL_API_KEY` (idempotent; `GET /api/internal/brands` lists them);
+- each NEW brand gets a generated design (`services/themeGen.js`): palette (light/dark),
+  system font stack, radius, layout (grid/list/wide), hero alignment, logo mark, wording
+  (tagline, headline, lead, steps, trust, section order) and its own offer order — chosen to
+  differ as much as possible from existing brands (`mostDistinctDesign`). Stable afterwards;
+- served with server-injected CSS variables + `<html data-mode data-layout data-hero>`;
+  the primary site (`SITE_URL`) has no brand and keeps the original design;
+- always **noindex** (robots `Disallow: /`, `X-Robots-Tag`, meta robots, no sitemap) and no
+  newsletter box. Legacy `BRAND_HOSTS` env entries are migrated into the table on startup.
 
-Brand hosts override `site_name`/`tagline`/`hero_*`/`contact_email`, are always
-**noindex** (robots.txt `Disallow: /`, `X-Robots-Tag`, meta robots, no sitemap) so they
-never compete with the primary site (`SITE_URL`) in search, and hide the newsletter box.
-Add one: Cloudflare A `offers.<domain>` → controller IP (DNS only), nginx server block
-proxying to 127.0.0.1:3010, `certbot --nginx -d offers.<domain> --cert-name offers.<domain>`
-(one cert per domain — never combine brands on one cert), add to `BRAND_HOSTS`, restart pm2.
-Only add brand hosts for long-lived sending domains: the same catalogue on many sender
-domains is a snowshoe-spam pattern.
+Env: `INTERNAL_API_KEY` (enables the internal API). Only add brands for long-lived sending
+domains: the same catalogue on many sender domains is still a snowshoe-spam risk, which is why
+every brand gets a distinct design, wording and order.

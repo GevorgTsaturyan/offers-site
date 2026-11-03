@@ -12,6 +12,8 @@ export const site = reactive({
   min_age: '18',
   responsible_gambling_url: 'https://www.begambleaware.org',
   subscribe_enabled: true,   // false on brand hosts (offers.<sender-domain>)
+  theme: null,               // brand hosts: { layout, hero, mark, mode } (CSS applied server-side)
+  copy: null,                // brand hosts: { lead, how_title, steps, trust, sections }
   site_url: '',
 });
 

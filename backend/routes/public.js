@@ -4,6 +4,7 @@ import * as Offers from '../services/offers.js';
 import * as Controller from '../services/controllerClient.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 import { siteFor } from '../services/brands.js';
+import { orderOffers } from '../services/themeGen.js';
 
 const router = express.Router();
 
@@ -17,10 +18,21 @@ export function readSettings(req) {
 
 router.get('/api/site', (req, res) => {
   const site = siteFor(req);
-  res.json({ ...readSettings(req), subscribe_enabled: site.primary, site_url: site.url });
+  const b = site.brand;
+  res.json({
+    ...readSettings(req), subscribe_enabled: site.primary, site_url: site.url,
+    // Brand hosts: generated design + wording (services/themeGen.js). null on the primary site.
+    theme: b ? { layout: b.theme.layout, hero: b.theme.hero, mark: b.theme.mark, mode: b.theme.mode } : null,
+    copy: b ? { lead: b.copy.lead, how_title: b.copy.how_title, steps: b.copy.steps, trust: b.copy.trust, sections: b.copy.sections } : null,
+  });
 });
 
-router.get('/api/offers', (req, res) => res.json(Offers.listPublic()));
+// Brand hosts get their own stable offer order, so no two sites list them identically.
+router.get('/api/offers', (req, res) => {
+  const b = siteFor(req).brand;
+  const list = Offers.listPublic();
+  res.json(b ? orderOffers(list, b.offer_seed) : list);
+});
 
 router.get('/api/offers/:slug', (req, res) => {
   const row = Offers.findBySlug(req.params.slug);
