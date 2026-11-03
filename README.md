@@ -98,8 +98,11 @@ Email buttons link to the same domain as the From address. The same app serves a
   system font stack, radius, layout (grid/list/wide), hero alignment, logo mark, wording
   (tagline, headline, lead, steps, trust, section order) and its own offer order — chosen to
   differ as much as possible from existing brands (`mostDistinctDesign`). Stable afterwards;
-- served with server-injected CSS variables + `<html data-mode data-layout data-hero>`;
-  the primary site (`SITE_URL`) has no brand and keeps the original design;
+- **visual themes are OFF by default** (`BRAND_THEMES` unset): every brand site uses the original
+  design; only name, logo mark, wording and offer order differ. `BRAND_THEMES=on` serves the
+  generated theme (server-injected CSS variables + `<html data-mode data-layout data-hero>`). The
+  internal API reports `themed`, and the controller colours a brand's email button only when true;
+- brand data is embedded in the page (`window.__SITE__`) so the right brand shows on first paint;
 - always **noindex** (robots `Disallow: /`, `X-Robots-Tag`, meta robots, no sitemap) and no
   newsletter box. Legacy `BRAND_HOSTS` env entries are migrated into the table on startup.
 

@@ -52,8 +52,12 @@ export function headFor(path, req) {
   const name = s.site_name || 'Casino Offers';
   const t = part => `${part} · ${name}`;
   const b = site.brand;
+  // Generated per-brand visual themes are OFF by default: every site uses the
+  // original design (user preference, 2026-11-03). Names, wording and offer order
+  // still differ per brand. BRAND_THEMES=on re-enables colours/fonts/layouts.
+  const themed = b && process.env.BRAND_THEMES === 'on';
   const base = { status: 200, noindex: !site.primary, canonical: SITE_URL + path, siteName: name,
-    themeCss: b ? themeCss(b.theme) : '', site: req ? sitePayload(req) : null, htmlAttrs: b ? { 'data-layout': b.theme.layout, 'data-hero': b.theme.hero, 'data-mode': b.theme.mode } : null };
+    themeCss: themed ? themeCss(b.theme) : '', site: req ? sitePayload(req) : null, htmlAttrs: themed ? { 'data-layout': b.theme.layout, 'data-hero': b.theme.hero, 'data-mode': b.theme.mode } : null };
 
   const org = { '@type': 'Organization', name, url: SITE_URL + '/' };
   const crumbs = items => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: SITE_URL + u })) });

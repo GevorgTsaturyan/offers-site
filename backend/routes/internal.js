@@ -18,7 +18,9 @@ router.use((req, res, next) => (authorized(req) ? next() : res.status(401).json(
 router.post('/brands', (req, res) => {
   try {
     const b = upsertBrand(req.body || {});
-    res.status(b.created ? 201 : 200).json(b);
+    // `themed` tells the controller whether the site shows the brand's generated
+    // colours (BRAND_THEMES=on) — it only colours email buttons to match when true.
+    res.status(b.created ? 201 : 200).json({ ...b, themed: process.env.BRAND_THEMES === 'on' });
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
   }

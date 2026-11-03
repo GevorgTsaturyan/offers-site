@@ -214,5 +214,9 @@ test('shell embeds brand site data for first paint', async () => {
   const fakeReq = { get: (h) => (h.toLowerCase() === 'host' ? 'offers.ardovia.co' : undefined) };
   const html = renderShell('<html><head><title>x</title></head><body><div id="app"></div></body></html>', headFor('/', fakeReq));
   assert.match(html, /window\.__SITE__=\{"site_name":"Ardovia"/);
-  assert.match(html, /<html data-layout=/);
+  assert.doesNotMatch(html, /data-layout=|brand-theme/, 'themes are off by default — original design');
+  process.env.BRAND_THEMES = 'on';
+  const themed = renderShell('<html><head><title>x</title></head><body><div id="app"></div></body></html>', headFor('/', fakeReq));
+  delete process.env.BRAND_THEMES;
+  assert.match(themed, /<html data-layout=/);
 });
