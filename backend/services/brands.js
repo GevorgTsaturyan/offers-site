@@ -84,7 +84,7 @@ export function mostDistinctDesign(domain, existing) {
   for (let i = 0; i < 200; i++) {
     const d = generateBrandDesign(i === 0 ? domain : `${domain}#${i}`);
     // palette collisions weigh most (most visible), then headline/font/layout
-    const score = FEATURES(d).reduce((a, f) => a + (used.get(f) || 0) * (f.startsWith('p:') ? 5 : f.startsWith('h:') || f.startsWith('f:') || f.startsWith('l:') ? 3 : 1), 0);
+    const score = FEATURES(d).reduce((a, f) => a + (used.get(f) || 0) * (f.startsWith('p:') ? 5 : f.startsWith('h:') || f.startsWith('t:') || f.startsWith('f:') || f.startsWith('l:') ? 3 : 1), 0);
     if (score < bestScore) { best = d; bestScore = score; if (score === 0) break; }
   }
   return best;
