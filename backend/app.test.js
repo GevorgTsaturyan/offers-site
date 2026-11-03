@@ -220,3 +220,12 @@ test('shell embeds brand site data for first paint', async () => {
   delete process.env.BRAND_THEMES;
   assert.match(themed, /<html data-layout=/);
 });
+
+test('no crawler fallback text on brand hosts; styled fallback on primary', async () => {
+  const { renderShell, headFor } = await import('./services/seo.js');
+  const shell = '<html><head><title>x</title></head><body><div id="app"></div></body></html>';
+  const brand = renderShell(shell, headFor('/', { get: () => 'offers.ardovia.co' }));
+  assert.match(brand, /<div id="app"><\/div>/);
+  const primary = renderShell(shell, headFor('/', { get: () => 'noradion.org' }));
+  assert.match(primary, /<div id="app"><div class="ssr-fallback"><h1>/);
+});

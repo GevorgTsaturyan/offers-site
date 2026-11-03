@@ -117,10 +117,13 @@ export function renderShell(html, head) {
   ].filter(Boolean).join('\n    ');
   const attrs = head.htmlAttrs ? Object.entries(head.htmlAttrs).map(([k, v]) => ` ${k}="${esc(v)}"`).join('') : '';
   if (attrs) html = html.replace(/<html([^>]*)>/i, `<html$1${attrs}>`);
+  if (head.body && !head.noindex) tags += '\n    <style>.ssr-fallback{max-width:760px;margin:0 auto;padding:48px 20px;color:#9aa3b8;font-family:system-ui,sans-serif;line-height:1.6}.ssr-fallback h1,.ssr-fallback h2{color:#eef1f8;margin:0 0 12px}.ssr-fallback ul{list-style:none;padding:0}.ssr-fallback li{margin:6px 0}.ssr-fallback a{color:#f5c451}</style>';
   if (head.site) tags += `\n    <script>window.__SITE__=${JSON.stringify(head.site).replace(/</g, '\\u003c')}</script>`;
   if (head.themeCss) tags += `\n    <style id="brand-theme">${head.themeCss.replace(/</g, '')}</style>`;
   return html
-    .replace('<div id="app"></div>', `<div id="app">${head.body || ''}</div>`)
+    // Crawler fallback text (replaced when the app mounts). Brand hosts are noindex, so
+    // they get none — no unstyled flash. On the primary site it's wrapped and styled.
+    .replace('<div id="app"></div>', `<div id="app">${head.body && !head.noindex ? `<div class="ssr-fallback">${head.body}</div>` : ''}</div>`)
     .replace(/<meta name="description"[^>]*>\s*/i, '')
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(head.title)}</title>\n    ${tags}`);
 }
