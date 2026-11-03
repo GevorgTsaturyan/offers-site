@@ -160,13 +160,14 @@ export function themeCss(t) {
   if (!t || ![t.bg, t.bg2, t.text, t.muted, t.accent, t.accent2].every((c) => HEX.test(c || ''))) return '';
   const fg = t.mode === 'light' ? '0, 0, 0' : '255, 255, 255';
   const safeFont = (s) => String(s || '').replace(/[<>{};]/g, '');
-  return `:root{--bg:${t.bg};--bg-2:${t.bg2};--surface:rgba(${fg},0.04);--surface-2:rgba(${fg},0.07);`
+  // html[data-mode] (not :root) so these win over styles.css, which loads AFTER this inline block.
+  return `html[data-mode]{--bg:${t.bg};--bg-2:${t.bg2};--surface:rgba(${fg},0.04);--surface-2:rgba(${fg},0.07);`
     + `--border:rgba(${fg},0.10);--border-strong:rgba(${fg},0.18);--text:${t.text};--muted:${t.muted};`
     + `--faint:${t.muted};--gold:${t.accent};--gold-2:${t.accent};--violet:${t.accent2};`
     + `--radius:${Number(t.radius) || 18}px;--radius-sm:${Math.max(4, (Number(t.radius) || 18) - 6)}px;`
     + `--font:${safeFont(t.font)};--display:${safeFont(t.display)};--accent-text:${HEX.test(t.accent_text || '') ? t.accent_text : '#ffffff'};`
     + `--btn-radius:${Number(t.button_radius) || 999}px;}`
-    + `body{background:radial-gradient(1100px 560px at ${t.hero === 'left' ? '10%' : '85%'} -10%, ${rgba(t.accent2, 0.16)}, transparent 60%),`
+    + `html[data-mode] body{background:radial-gradient(1100px 560px at ${t.hero === 'left' ? '10%' : '85%'} -10%, ${rgba(t.accent2, 0.16)}, transparent 60%),`
     + `radial-gradient(900px 500px at ${t.hero === 'left' ? '95%' : '-10%'} 10%, ${rgba(t.accent, 0.10)}, transparent 60%), var(--bg);}`
-    + `::selection{background:var(--gold);color:var(--accent-text);}`;
+    + `html[data-mode] ::selection{background:var(--gold);color:var(--accent-text);}`;
 }

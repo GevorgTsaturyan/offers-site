@@ -201,3 +201,10 @@ test('different brands get different designs', async () => {
   const keys = new Set(ds.map(d => `${d.theme.palette}|${d.theme.layout}|${d.theme.font}|${d.copy.hero_title}`));
   assert.equal(keys.size, ds.length);
 });
+
+test('brand theme CSS outranks styles.css (:root) — scoped to html[data-mode]', async () => {
+  const { themeCss, generateBrandDesign } = await import('./services/themeGen.js');
+  const css = themeCss(generateBrandDesign('serawin.net').theme);
+  assert.match(css, /^html\[data-mode\]\{--bg:/);
+  assert.doesNotMatch(css, /:root/);
+});
