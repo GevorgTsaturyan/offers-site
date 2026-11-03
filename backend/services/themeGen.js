@@ -51,8 +51,9 @@ const HEROES  = ['center', 'left'];
 const MARKS   = ['★', '◆', '●', '▲', '✦', '■', '✺', '❖'];
 
 const COPY = {
+  // (noradion.org's own tagline/headline are deliberately NOT in these pools)
   tagline: [
-    'Hand-picked casino offers, explained clearly.',
+    'Offers worth reading, terms first.',
     'Welcome offers compared in plain language.',
     'Clear terms first. Then decide.',
     'A short list of offers worth reading.',
@@ -60,7 +61,7 @@ const COPY = {
     'Our weekly shortlist of welcome offers.',
   ],
   hero_title: [
-    'Today’s best casino welcome offers',
+    'Welcome offers, minus the small print',
     'This week’s shortlist of welcome offers',
     'Compare welcome offers in a minute',
     'Fresh picks, with the terms up front',
