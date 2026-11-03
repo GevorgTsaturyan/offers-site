@@ -16,16 +16,20 @@ export function readSettings(req) {
   return req ? { ...base, ...siteFor(req).overrides } : base;
 }
 
-router.get('/api/site', (req, res) => {
+// Same payload for GET /api/site and the server-rendered shell (window.__SITE__),
+// so brand name/wording are correct on first paint (no generic "Casino Offers" flash).
+export function sitePayload(req) {
   const site = siteFor(req);
   const b = site.brand;
-  res.json({
+  return {
     ...readSettings(req), subscribe_enabled: site.primary, site_url: site.url,
     // Brand hosts: generated design + wording (services/themeGen.js). null on the primary site.
     theme: b ? { layout: b.theme.layout, hero: b.theme.hero, mark: b.theme.mark, mode: b.theme.mode } : null,
     copy: b ? { lead: b.copy.lead, how_title: b.copy.how_title, steps: b.copy.steps, trust: b.copy.trust, sections: b.copy.sections } : null,
-  });
-});
+  };
+}
+
+router.get('/api/site', (req, res) => res.json(sitePayload(req)));
 
 // Brand hosts get their own stable offer order, so no two sites list them identically.
 router.get('/api/offers', (req, res) => {

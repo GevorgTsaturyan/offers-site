@@ -208,3 +208,11 @@ test('brand theme CSS outranks styles.css (:root) — scoped to html[data-mode]'
   assert.match(css, /^html\[data-mode\]\{--bg:/);
   assert.doesNotMatch(css, /:root/);
 });
+
+test('shell embeds brand site data for first paint', async () => {
+  const { renderShell, headFor } = await import('./services/seo.js');
+  const fakeReq = { get: (h) => (h.toLowerCase() === 'host' ? 'offers.ardovia.co' : undefined) };
+  const html = renderShell('<html><head><title>x</title></head><body><div id="app"></div></body></html>', headFor('/', fakeReq));
+  assert.match(html, /window\.__SITE__=\{"site_name":"Ardovia"/);
+  assert.match(html, /<html data-layout=/);
+});

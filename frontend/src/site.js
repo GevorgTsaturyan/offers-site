@@ -17,6 +17,9 @@ export const site = reactive({
   site_url: '',
 });
 
+// Server-rendered initial data (seo.js renderShell) — correct brand on first paint.
+if (typeof window !== 'undefined' && window.__SITE__) Object.assign(site, window.__SITE__, { loaded: true });
+
 export async function loadSite() {
   try {
     Object.assign(site, await request('/api/site'), { loaded: true });

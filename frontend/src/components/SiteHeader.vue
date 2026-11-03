@@ -8,9 +8,9 @@
 
       <nav class="nav" :class="{ open }">
         <RouterLink to="/#offers" @click="open = false">Offers</RouterLink>
-        <RouterLink to="/#how" @click="open = false">How it works</RouterLink>
+        <RouterLink v-if="!site.copy || site.copy.sections.includes('how')" to="/#how" @click="open = false">How it works</RouterLink>
         <RouterLink to="/info/responsible-gambling" @click="open = false">Play safe</RouterLink>
-        <RouterLink to="/#subscribe" class="btn btn-gold btn-sm" @click="open = false">Get offers by email</RouterLink>
+        <RouterLink v-if="site.subscribe_enabled !== false" to="/#subscribe" class="btn btn-gold btn-sm" @click="open = false">Get offers by email</RouterLink>
       </nav>
 
       <button class="burger" :aria-expanded="open" aria-label="Menu" @click="open = !open">
