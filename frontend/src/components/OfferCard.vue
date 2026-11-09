@@ -23,9 +23,9 @@
       <li v-for="h in offer.highlights.slice(0, 3)" :key="h">{{ h }}</li>
     </ul>
 
-    <div v-if="offer.wagering || offer.minDeposit" class="facts">
-      <div v-if="offer.wagering"><span>Wagering</span><strong>{{ offer.wagering }}</strong></div>
-      <div v-if="offer.minDeposit"><span>Min. deposit</span><strong>{{ offer.minDeposit }}</strong></div>
+    <!-- Minimum deposit is intentionally not shown on cards (user request 2026-11-09). -->
+    <div v-if="offer.wagering" class="facts">
+      <div><span>Wagering</span><strong>{{ offer.wagering }}</strong></div>
     </div>
 
     <div class="actions">
